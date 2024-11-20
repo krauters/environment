@@ -1,7 +1,7 @@
 {
 	"name": "@krauters/environment",
 	"description": "A TypeScript utility library that provides a fluent, type-safe API for defining, transforming, and managing environment variable configurations in applications.",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"main": "dist/src/index.js",
 	"type": "commonjs",
 	"scripts": {
@@ -30,10 +30,10 @@
 	"license": "ISC",
 	"devDependencies": {
 		"@jest/globals": "^29.7.0",
-		"@krauters/eslint-config": "^1.4.0",
-		"@krauters/utils": "^0.7.1",
+		"@krauters/eslint-config": "^1.4.2",
+		"@krauters/utils": "^1.1.0",
 		"@types/jest": "^29.5.14",
-		"husky": "^9.1.6",
+		"husky": "^9.1.7",
 		"jest": "^29.7.0",
 		"nodemon": "^3.1.7",
 		"ts-jest": "^29.2.5",
@@ -43,5 +43,8 @@
 	"files": [
 		"dist",
 		"scripts"
-	]
+	],
+	"dependencies": {
+		"dotenv": "^16.4.5"
+	}
 }

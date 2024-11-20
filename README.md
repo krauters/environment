@@ -56,6 +56,10 @@ console.log(config.LOG_LEVEL) // Optional, may be undefined if not set
 - **Built-In Validation**: Required variables are validated, and an error is thrown if any are missing.
 - **Configurable**: Easily designate required/optional variables and specify defaults only where needed.
 
+### DotEnv
+
+This package supports [.env](https://www.npmjs.com/package/dotenv) configuration.
+
 ## Husky Git Hooks
 
 Husky is integrated to streamline commit processes by automating checks before commits are finalized. This setup enforces code quality standards across your team and ensures that bundled assets remain consistent.
