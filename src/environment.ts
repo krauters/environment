@@ -79,26 +79,31 @@ export class EnvironmentBuilder<E = unknown, O = unknown> {
 	}
 
 	withPrefix(prefix: string): EnvironmentBuilder<E, O> {
-		console.info(`Using environment variable prefix [${prefix}]`)
+		debug(`Using environment variable prefix [${prefix}]`)
 
 		const exampleKeys = [...this.info.requiredKeys, ...this.info.optionalKeys]
 		const examples = exampleKeys.map((key) => `${prefix}${key.toUpperCase()}=example_value`)
 
 		if (examples.length > 0) {
-			console.info(`Example usage: [${examples.join(', ')}]`)
+			debug(`Example usage: [${examples.join(', ')}]`)
 		} else {
-			console.info(`Example usage: ${prefix}VARIABLE_NAME=example_value`)
+			debug(`Example usage: ${prefix}VARIABLE_NAME=example_value`)
 		}
 
-		const updatedInfo = { ...this.info, prefix }
+		const updatedInfo: EnvironmentInfo<E> = { ...this.info, prefix }
 
 		return new EnvironmentBuilder(updatedInfo)
 	}
 
-	private applyTransform(key: string, value: string | undefined): unknown {
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
+	private applyTransform<T>(key: string, value: string | undefined): T | undefined {
 		const transformFunction = this.info.transforms[key]
 
-		return typeof transformFunction === 'function' && value ? transformFunction(value) : value
+		if (typeof transformFunction === 'function' && value !== undefined) {
+			return transformFunction(value) as T
+		}
+
+		return value as unknown as T | undefined
 	}
 
 	private prefixedKey(key: string): string {
@@ -139,7 +144,7 @@ export class EnvironmentBuilder<E = unknown, O = unknown> {
 			const finalValue = envValue ?? defaultValue
 
 			if (finalValue !== undefined) {
-				result.requiredValues[key as keyof E] = this.applyTransform(key, finalValue as string) as E[keyof E]
+				result.requiredValues[key as keyof E] = this.applyTransform(key, finalValue as string)
 				debug('Resolved required key', [key], 'value', [finalValue])
 			} else {
 				result.errors.push(key)
