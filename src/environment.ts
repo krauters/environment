@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { configDotenv } from 'dotenv'
 
-// environment-builder.ts
 import type { EnvironmentInfo, MapNamesToKeys } from './structures'
 
+import { debug } from './utils'
+
 configDotenv()
+
 export class EnvironmentBuilder<E = unknown, O = unknown> {
 	private constructor(private readonly info: EnvironmentInfo<E>) {}
 
@@ -16,6 +18,7 @@ export class EnvironmentBuilder<E = unknown, O = unknown> {
 		const initialInfo: EnvironmentInfo<any> = {
 			defaultValues: {},
 			optionalKeys: [],
+			prefix: '',
 			requiredKeys,
 			transforms: {},
 		}
@@ -75,19 +78,49 @@ export class EnvironmentBuilder<E = unknown, O = unknown> {
 		>
 	}
 
+	withPrefix(prefix: string): EnvironmentBuilder<E, O> {
+		console.info(`Using environment variable prefix [${prefix}]`)
+
+		const exampleKeys = [...this.info.requiredKeys, ...this.info.optionalKeys]
+		const examples = exampleKeys.map((key) => `${prefix}${key.toUpperCase()}=example_value`)
+
+		if (examples.length > 0) {
+			console.info(`Example usage: [${examples.join(', ')}]`)
+		} else {
+			console.info(`Example usage: ${prefix}VARIABLE_NAME=example_value`)
+		}
+
+		const updatedInfo = { ...this.info, prefix }
+
+		return new EnvironmentBuilder(updatedInfo)
+	}
+
 	private applyTransform(key: string, value: string | undefined): unknown {
 		const transformFunction = this.info.transforms[key]
 
 		return typeof transformFunction === 'function' && value ? transformFunction(value) : value
 	}
 
+	private prefixedKey(key: string): string {
+		const prefixed = this.info.prefix ? `${this.info.prefix}${key}` : key
+
+		return prefixed
+	}
+
 	private processOptionalKeys(environment: Record<string, string | undefined>): Partial<E> {
+		debug('Processing optional keys')
 		const optionalValues: Partial<E> = {}
 
 		for (const key of this.info.optionalKeys) {
-			const envValue = environment[key]
-			optionalValues[key as keyof E] = this.applyTransform(key, envValue) as E[keyof E]
+			const envKey = this.prefixedKey(key)
+			const envValue = environment[envKey]
+			const transformedValue = this.applyTransform(key, envValue)
+			optionalValues[key as keyof E] = transformedValue as E[keyof E]
+
+			debug('Resolved optional key', [key], 'value', [envValue], 'transformed', [transformedValue])
 		}
+
+		debug('Final optional values', [optionalValues])
 
 		return optionalValues
 	}
@@ -96,20 +129,25 @@ export class EnvironmentBuilder<E = unknown, O = unknown> {
 		errors: string[]
 		requiredValues: Partial<E>
 	} {
+		debug('Processing required keys')
 		const result = { errors: [] as string[], requiredValues: {} as Partial<E> }
 
 		for (const key of this.info.requiredKeys) {
-			const envValue = environment[key]
-			const hasEnvValue = envValue !== undefined
+			const envKey = this.prefixedKey(key)
+			const envValue = environment[envKey]
 			const defaultValue = this.info.defaultValues[key as keyof E]
-			const finalValue = hasEnvValue ? envValue : defaultValue
+			const finalValue = envValue ?? defaultValue
 
 			if (finalValue !== undefined) {
 				result.requiredValues[key as keyof E] = this.applyTransform(key, finalValue as string) as E[keyof E]
+				debug('Resolved required key', [key], 'value', [finalValue])
 			} else {
 				result.errors.push(key)
+				debug('Missing required key', [key])
 			}
 		}
+
+		debug('Final required values', [result.requiredValues], 'errors', [result.errors])
 
 		return result
 	}
