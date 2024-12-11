@@ -1,4 +1,7 @@
-import { describe, it, expect, jest } from '@jest/globals'
+/* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, expect, it, jest } from '@jest/globals'
+
 import { EnvironmentBuilder } from '../src/environment'
 
 describe('EnvironmentBuilder', () => {
@@ -59,7 +62,7 @@ describe('EnvironmentBuilder', () => {
 		it('should throw an error if required keys are missing and no default is provided', () => {
 			const builder = EnvironmentBuilder.create('MISSING_KEY')
 			expect(() => builder.environment({})).toThrowError(
-				/The following environment variables are required but not set: \["MISSING_KEY"\]/
+				/The following environment variables are required but not set: \["MISSING_KEY"\]/,
 			)
 		})
 
@@ -78,7 +81,7 @@ describe('EnvironmentBuilder', () => {
 
 		it('should handle optional environment variables without error', () => {
 			const builder = EnvironmentBuilder.create('REQUIRED_KEY').optionals('OPTIONAL_KEY')
-			const result = builder.environment({ REQUIRED_KEY: 'value', OPTIONAL_KEY: 'optionalValue' })
+			const result = builder.environment({ OPTIONAL_KEY: 'optionalValue', REQUIRED_KEY: 'value' })
 			expect(result.REQUIRED_KEY).toBe('value')
 			expect(result.OPTIONAL_KEY).toBe('optionalValue')
 		})
@@ -97,6 +100,90 @@ describe('EnvironmentBuilder', () => {
 			const result = builder.environment({})
 			expect(result.REQUIRED_KEY).toBe('defaultValue')
 			expect(result.OPTIONAL_KEY).toBeUndefined()
+		})
+	})
+})
+
+describe('EnvironmentBuilder with Prefix', () => {
+	describe('withPrefix', () => {
+		it('should use the prefix for environment variable lookup', () => {
+			process.env.MYAPP_REQUIRED_KEY = 'prefixedValue'
+			const builder = EnvironmentBuilder.create('REQUIRED_KEY').withPrefix('MYAPP_')
+			const result = builder.environment(process.env)
+			expect(result.REQUIRED_KEY).toBe('prefixedValue')
+			delete process.env.MYAPP_REQUIRED_KEY
+		})
+
+		it('should fallback to default values if prefixed environment variables are missing', () => {
+			const builder = EnvironmentBuilder.create('REQUIRED_KEY')
+				.withPrefix('MYAPP_')
+				.defaults({ REQUIRED_KEY: 'defaultValue' })
+			const result = builder.environment({})
+			expect(result.REQUIRED_KEY).toBe('defaultValue')
+		})
+
+		it('should throw an error if prefixed required variables are missing and no default is provided', () => {
+			const builder = EnvironmentBuilder.create('MISSING_KEY').withPrefix('MYAPP_')
+			expect(() => builder.environment({})).toThrowError(
+				/The following environment variables are required but not set: \["MISSING_KEY"\]/,
+			)
+		})
+
+		it('should handle optional prefixed environment variables', () => {
+			process.env.MYAPP_REQUIRED_KEY = 'requiredValue'
+			process.env.MYAPP_OPTIONAL_KEY = 'optionalValue'
+			const result = EnvironmentBuilder.create('REQUIRED_KEY')
+				.withPrefix('MYAPP_')
+				.optionals('OPTIONAL_KEY')
+				.environment()
+
+			expect(result.REQUIRED_KEY).toBe('requiredValue')
+			expect(result.OPTIONAL_KEY).toBe('optionalValue')
+			delete process.env.MYAPP_REQUIRED_KEY
+			delete process.env.MYAPP_OPTIONAL_KEY
+		})
+
+		it('should allow missing optional prefixed environment variables without error', () => {
+			const builder = EnvironmentBuilder.create('REQUIRED_KEY').withPrefix('MYAPP_').optionals('OPTIONAL_KEY')
+			const result = builder.environment({ MYAPP_REQUIRED_KEY: 'requiredValue' })
+			expect(result.REQUIRED_KEY).toBe('requiredValue')
+			expect(result.OPTIONAL_KEY).toBeUndefined()
+		})
+
+		it('should apply transformations to prefixed environment variables', () => {
+			process.env.MYAPP_REQUIRED_KEY = 'lowercase'
+			const transformFunction = (value: string) => value.toUpperCase()
+			const builder = EnvironmentBuilder.create('REQUIRED_KEY')
+				.withPrefix('MYAPP_')
+				.transform(transformFunction, 'REQUIRED_KEY')
+			const result = builder.environment(process.env)
+			expect(result.REQUIRED_KEY).toBe('LOWERCASE')
+			delete process.env.MYAPP_REQUIRED_KEY
+		})
+	})
+
+	describe('environment', () => {
+		it('should not use the prefix if it is not set', () => {
+			process.env.REQUIRED_KEY = 'noPrefixValue'
+			const builder = EnvironmentBuilder.create('REQUIRED_KEY')
+			const result = builder.environment(process.env)
+			expect(result.REQUIRED_KEY).toBe('noPrefixValue')
+			delete process.env.REQUIRED_KEY
+		})
+
+		it('should properly switch between prefixed and unprefixed logic', () => {
+			process.env.MYAPP_REQUIRED_KEY = 'prefixedValue'
+			const builderWithPrefix = EnvironmentBuilder.create('REQUIRED_KEY').withPrefix('MYAPP_')
+			const resultWithPrefix = builderWithPrefix.environment(process.env)
+			expect(resultWithPrefix.REQUIRED_KEY).toBe('prefixedValue')
+
+			process.env.REQUIRED_KEY = 'unprefixedValue'
+			const builderWithoutPrefix = EnvironmentBuilder.create('REQUIRED_KEY')
+			const resultWithoutPrefix = builderWithoutPrefix.environment(process.env)
+			expect(resultWithoutPrefix.REQUIRED_KEY).toBe('unprefixedValue')
+
+			delete process.env.MYAPP_REQUIRED_KEY
+			delete process.env.REQUIRED_KEY
 		})
 	})
 })

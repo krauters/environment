@@ -1,6 +1,7 @@
 export interface EnvironmentInfo<E = unknown> {
 	defaultValues: Partial<E>
 	optionalKeys: string[]
+	prefix?: string
 	requiredKeys: string[]
 	transforms: Record<string, (value: string) => unknown>
 }

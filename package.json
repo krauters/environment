@@ -1,7 +1,7 @@
 {
 	"name": "@krauters/environment",
 	"description": "A TypeScript utility library that provides a fluent, type-safe API for defining, transforming, and managing environment variable configurations in applications.",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"main": "dist/src/index.js",
 	"type": "commonjs",
 	"scripts": {
@@ -9,7 +9,7 @@
 		"dev": "ts-node ./src/index.ts",
 		"example-1": "ts-node ./example/1.ts",
 		"fix": "npm run lint -- --fix",
-		"lint": "npx eslint src/**",
+		"lint": "npx eslint src/** test/**",
 		"prepare": "husky || true",
 		"prepublishOnly": "npm run build",
 		"start": "nodemon --inspect -e ts -w ./src -x npm run dev",
@@ -27,6 +27,14 @@
 		"typescript"
 	],
 	"author": "Colten Krauter <coltenkrauter>",
+	"bugs": {
+		"url": "https://github.com/krauters/environment/issues/new?title=%5BBUG%5D+Brief+Description&template=bug_report.md"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/krauters/environment.git"
+	},
+	"homepage": "https://buymeacoffee.com/coltenkrauter",
 	"license": "ISC",
 	"devDependencies": {
 		"@jest/globals": "^29.7.0",

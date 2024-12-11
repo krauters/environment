@@ -39,6 +39,7 @@ Configure environment variables with custom defaults and transformations, then r
 // Example setup with defaults and transformations
 const config = EnvironmentBuilder
   .create('API_URL', 'TIMEOUT') // Define required variables
+  .withPrefix('MYAPP_') // Use a prefix for loading environment variables (e.g., MYAPP_API_URL)
   .optionals('LOG_LEVEL') // Define optional variables
   .defaults({ TIMEOUT: 3000 }) // Provide defaults for the required variables
   .transform(value => parseInt(value), 'TIMEOUT') // Custom transformation to number
@@ -55,6 +56,7 @@ console.log(config.LOG_LEVEL) // Optional, may be undefined if not set
 - **Custom Transformations**: Define custom transformations (e.g., parse strings to numbers, arrays).
 - **Built-In Validation**: Required variables are validated, and an error is thrown if any are missing.
 - **Configurable**: Easily designate required/optional variables and specify defaults only where needed.
+- **Configurable Prefixes**: Create a prefix for namespacing environment variables.
 
 ### DotEnv
 
